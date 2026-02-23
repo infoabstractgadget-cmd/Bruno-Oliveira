@@ -1,5 +1,5 @@
-import React, { useState, useMemo } from "react";
-import { MONTHS, PLATFORMS, PLAT_COLORS, DEFAULT_METRICS } from "./constants";
+import React, { useState, useMemo, useEffect } from "react";
+import { MONTHS, PLATFORMS, PLAT_COLORS, DEFAULT_METRICS, BRANDS, BRAND_METRICS } from "./constants";
 import { Cluster, Metrics, PlatformMetrics } from "./types";
 import { exportToExcel } from "./utils/excel";
 import { Card } from "./components/Card";
@@ -30,7 +30,8 @@ export default function App() {
   const [step, setStep] = useState(0);
 
   // Step 0
-  const [brandName, setBrandName] = useState("");
+    const [selectedBrand, setSelectedBrand] = useState("");
+    const [brandName, setBrandName] = useState("");
   const [budgetAnual, setBudgetAnual] = useState(35000);
   const [feePercent, setFeePercent] = useState(8.5);
   const [numConteudos, setNumConteudos] = useState(120);
@@ -54,6 +55,14 @@ export default function App() {
   // Step 3
   const [metrics, setMetrics] = useState<Metrics>(JSON.parse(JSON.stringify(DEFAULT_METRICS)));
 
+  
+  // Quando se seleciona uma marca, carrega as suas metricas como benchmark
+  useEffect(() => {
+    if (selectedBrand && BRAND_METRICS[selectedBrand]) {
+      setMetrics(JSON.parse(JSON.stringify(BRAND_METRICS[selectedBrand])));
+      setBrandName(selectedBrand);
+    }
+  }, [selectedBrand]);
   // Computed
   const budgetMedia = budgetAnual * (1 - feePercent / 100);
   const totalObj = objN + objE + objT;
@@ -175,7 +184,7 @@ export default function App() {
   ];
 
   const canNext = () => {
-    if (step === 0) return budgetAnual > 0 && numConteudos > 0;
+        if (step === 0) return selectedBrand !== "" && budgetAnual > 0 && numConteudos > 0;
     if (step === 1) return Math.abs(totalObj - 100) < 1 && Math.abs(totalPlat - 100) < 1;
     if (step === 2) return clusters.length > 0 && Math.abs(totalCW - 100) < 1;
     return true;
@@ -216,9 +225,20 @@ export default function App() {
         {step === 0 && (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <Card title="Identificação">
-              <label className="text-[11px] text-slate-500 block mb-1">Nome da Marca / Produto</label>
-              <input value={brandName} onChange={e => setBrandName(e.target.value)} placeholder="Ex: COMPAL, Frize, B!"
-                className="w-full py-[9px] px-3 bg-slate-800 border border-slate-700 rounded-lg text-slate-200 text-[13px] outline-none mb-[14px] focus:border-indigo-500 transition-colors" />
+<label className="text-[11px] text-slate-500 block mb-1">Marca <span className="text-red-500">*</span></label>
+              <select
+                value={selectedBrand}
+                onChange={(e) => setSelectedBrand(e.target.value)}
+                className={`w-full py-[9px] px-3 bg-slate-800 border rounded-lg text-slate-200 text-[13px] outline-none mb-[14px] focus:border-indigo-500 transition-colors ${selectedBrand === '' ? 'border-red-500/60' : 'border-slate-700'}`}
+              >
+                <option value="">-- Seleciona a marca --</option>
+                {BRANDS.map(b => <option key={b} value={b}>{b}</option>)}
+              </select>
+              {selectedBrand === '' && (
+                <p className="text-[11px] text-red-400 -mt-3 mb-3">⚠ Deves selecionar uma marca para continuar</p>
+              )}
+              <label className="text-[11px] text-slate-500 block mb-1">Nome personalizado (opcional)</label>
+              <input value={brandName} onChange={(e) => setBrandName(e.target.value)} placeholder={selectedBrand || "Ex: COMPAL Summer Edition"} className="w-full py-[9px] px-3 bg-slate-800 border border-slate-700 rounded-lg text-slate-200 text-[13px] outline-none mb-[14px] focus:border-indigo-500 transition-colors" />
               <label className="text-[11px] text-slate-500 block mb-1">Budget Anual (com Fee)</label>
               <NumInput value={budgetAnual} onChange={setBudgetAnual} min={1000} step={500} suffix="€" />
               <div className="mt-[14px]">
