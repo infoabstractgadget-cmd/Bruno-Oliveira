@@ -1,0 +1,25 @@
+name: Daily AI News to Notion
+
+on:
+  schedule:
+    # 08:00 UTC ≈ 09:00 em Lisboa (UTC+1 verão / UTC+0 inverno)
+    - cron: "0 8 * * *"
+  workflow_dispatch:
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Publicar novidades de IA no Notion
+        env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          NOTION_TOKEN: ${{ secrets.NOTION_TOKEN }}
+          NOTION_DATABASE_ID: ${{ secrets.NOTION_DATABASE_ID }}
+        run: node scripts/daily-ai-news.mjs
